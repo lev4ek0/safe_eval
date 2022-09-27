@@ -42,18 +42,19 @@ class Lambda:
     Class for handling parsed lambda functions
     """
 
-    def __init__(self, df, command, local):
+    def __init__(self, df, command, variables, local):
         self.df = df
         self.command = command
         self.local = local
+        self.variables = variables
 
     def __call__(self, *values, **k_values):
         """
         Recursively solves expression inside of lambda function
         """
-        keys = [x for x in self.local if x not in k_values]
-        self.local = dict(zip(keys, values)) | k_values
-        indices = solve_expression(self.command, self.df, self.local)
+        keys = [x for x in self.variables if x not in k_values]
+        kwargs = dict(zip(keys, values)) | k_values | self.local
+        indices = solve_expression(self.command, self.df, kwargs)
         return indices
 
 
@@ -224,8 +225,8 @@ def _get_stack(command: str, local: dict = None, df = None) -> List[str]:
             command1 = command[i + lambda_pattern.regs[0][1]:]
             # ex: "lambda v: v ** 2 < 34"
             #     local = ["v"]
-            local = command[i:lambda_pattern.regs[0][1] - 1].split('lambda')[1].replace(' ', '').split(',')
-            stack.append((TypeOfCommand.FUNCTION, Lambda(df, command1, local)))
+            variables = command[i:lambda_pattern.regs[0][1] - 1].split('lambda')[1].replace(' ', '').split(',')
+            stack.append((TypeOfCommand.FUNCTION, Lambda(df, command1, variables, local)))
             i += lambda_pattern.regs[0][1] - 1 + len(command1)
         elif command[i] != ' ':
             variable_pattern = re.match(r'[\w]*', command[i:])
@@ -275,7 +276,7 @@ def _get_variable(var, df, local) -> pd.Series:
     """
     Returns series format for any var.
     """
-
+    variable = None
     if isinstance(var, tuple):
         if var[0] == TypeOfCommand.VALUE:
             variable = var[1]
@@ -288,7 +289,7 @@ def _get_variable(var, df, local) -> pd.Series:
                 raise Exception(('Variable "{var}" doesn\'t exist').format(var=f'{var[1]}'))
     else:
         variable = var
-    return variable
+    return var if variable is None else variable
 
 
 def _analyse(string, df=None, local=None):
@@ -454,18 +455,19 @@ def _polish_notation(s: List[Union[str, tuple]], df: Optional[pd.DataFrame] = No
             if element[0] == TypeOfCommand.FUNCTION_EXECUTABLE:
                 r = stack.pop()
                 args, kwargs = _solve_inside_method(r[1], df, local)
-                return _handle_function(r[2])(*args, **kwargs)
+                stack.append(_handle_function(r[2])(*args, **kwargs))
             if element[0] == TypeOfCommand.FUNCTION:
                 r = stack.pop()
+                if stack:
+                    raise Exception("There can't be function and something else")
                 return r[1]
 
     while op:
         _operate(stack, op.pop(), df, local)
+    if len(stack) > 1:
+        raise Exception("2 or more elements left without operations")
     value = stack.pop()
-    if isinstance(value, tuple):
-        if isinstance(value[0], TypeOfCommand):
-            return value[1]
-    return value
+    return _get_variable(value, df, local)
 
 
 def solve_expression(command: str, df: Optional[pd.DataFrame] = None, local: dict = None):
