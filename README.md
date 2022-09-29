@@ -56,7 +56,17 @@ save_evaluation - is an implementation of polish notation algorithm for mathemat
       import pandas as pd
      
       df = pd.DataFrame(data={'col1': [1, 2, 4, 7], 'col2': [3, 4, 8, 9]})
-      print(solve_expression(command="${col1}.apply(lambda v: v ** 2 > 0).all()", df=df))  # True
+      solve_expression(command="${col1}.apply(lambda v: v ** 2 > 0).all()", df=df)  # True
+      ```
+   -  ```
+      import pandas as pd
+     
+      df = pd.DataFrame(data={'col1': [1, 2, 4, 7], 'col2': [3, 4, 8, 9]})
+      solve_expression(command="${col1}.apply(lambda v: 1 if v < 3 else 2)", df=df)  # 0    1
+                                                                                       1    1
+                                                                                       2    2
+                                                                                       3    2
+                                                                                       Name: col1, dtype: int64
       ```
 
 4. Supported operations
