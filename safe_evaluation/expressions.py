@@ -158,6 +158,16 @@ def _text_inside_parentheses(s: str):
         _raise_excess_parentheses(s, stack[-1][1])
 
 
+def if_else_function(before, middle, end, df, local):
+    if solve_expression(command=middle, df=df, local=local):
+        value = solve_expression(command=before, df=df, local=local)
+    elif end.strip():
+        value = solve_expression(command=end, df=df, local=local)
+    else:
+        value = None
+    return value
+
+
 def _get_stack(command: str, local: dict = None, df = None) -> List[str]:
     """
     Returns splitted command.
@@ -169,7 +179,14 @@ def _get_stack(command: str, local: dict = None, df = None) -> List[str]:
     i = 0
 
     while i < len(command):
-        if command[i] in {'(', ')'}:
+        if if_else_pattern := re.match(r'[^\(\:]*if((?!if|else).)*(else)?[^)]*', command[i:]):
+            if_else_string = command[i:i+if_else_pattern.regs[0][1]]
+            before_if = re.match(r'((?!if).)*', if_else_string)
+            middle_if = re.match(r'((?!else).)*', if_else_string[2 + before_if.regs[0][1]:])
+            endif = if_else_string[2 + before_if.regs[0][1] + 4 + middle_if.regs[0][1]:]
+            stack.append((TypeOfCommand.FUNCTION, if_else_function(before_if.group(0), middle_if.group(0), endif, df, local)))
+            i += if_else_pattern.regs[0][1] - 1
+        elif command[i] in {'(', ')'}:
             stack.append(command[i])
         # mathing columns with ${column} format
         elif command[i] == '$':
