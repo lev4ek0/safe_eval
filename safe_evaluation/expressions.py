@@ -298,7 +298,7 @@ def _get_variable(var, df, local) -> pd.Series:
         if var[0] == TypeOfCommand.VALUE:
             variable = var[1]
         elif var[0] == TypeOfCommand.COLUMN:
-            if var[1] in df:
+            if var[1] in df.columns:
                 variable = df[var[1]]
             else:
                 raise Exception(f"The input DataFrame doesn't contain \"{var[1]}\" column")
