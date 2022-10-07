@@ -20,6 +20,12 @@ class TestParentheses(TestCase):
         result = [True, True, True, True, False, False, False]
         self.assertEqual(notation, result)
 
+    def test_polish_notation_wrong_column(self):
+        df, df_columns = self._create_df()
+        stack = ['(', (TypeOfCommand.COLUMN, 'col3'), '<=', (TypeOfCommand.VALUE, 2), ')']
+        with self.assertRaises(KeyError, "The input DataFrame doesn't contain \"col3\" column"):
+            _polish_notation(stack, df).values.tolist()
+
     def test_polish_notation_columns(self):
         df, df_columns = self._create_df()
         stack = ['(', (TypeOfCommand.COLUMN, 'col1'), '<=', (TypeOfCommand.COLUMN, 'col2'), ')']
