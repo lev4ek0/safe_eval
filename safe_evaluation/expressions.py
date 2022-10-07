@@ -301,7 +301,7 @@ def _get_variable(var, df, local) -> pd.Series:
             try:
                 variable = df[var[1]]
             except KeyError:
-                raise KeyError(f"The input DataFrame doesn't contain \"{var[1]}\" column")
+                raise KeyError(('The input DataFrame doesn\'t contain "{var}" column').format(var=f'{var[1]}'))
         elif var[0] == TypeOfCommand.VARIABLE:
             if local and var[1] in local:
                 variable = local[var[1]]

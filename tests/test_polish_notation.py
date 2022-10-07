@@ -23,7 +23,7 @@ class TestParentheses(TestCase):
     def test_polish_notation_wrong_column(self):
         df, df_columns = self._create_df()
         stack = ['(', (TypeOfCommand.COLUMN, 'col3'), '<=', (TypeOfCommand.VALUE, 2), ')']
-        with self.assertRaises(KeyError, "The input DataFrame doesn't contain \"col3\" column"):
+        with self.assertRaises(KeyError):
             _polish_notation(stack, df).values.tolist()
 
     def test_polish_notation_columns(self):
