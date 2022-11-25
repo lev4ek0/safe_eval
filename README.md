@@ -68,6 +68,22 @@ save_evaluation - is an implementation of polish notation algorithm for mathemat
                                                                                        3    2
                                                                                        Name: col1, dtype: int64
       ```
+   -  ```
+      from datetime import datetime
+
+      import pandas as pd
+      
+      dates = [datetime(year=2022, month=11, day=11 + i) for i in range(7)]
+      df = pd.DataFrame(data={'dates': dates})
+      solve_expression(command="${dates}.dt.dayofweek", df=df)  # 0    4
+                                                                  1    5
+                                                                  2    6
+                                                                  3    0
+                                                                  4    1
+                                                                  5    2
+                                                                  6    3
+                                                                  Name: dates, dtype: int64
+      ```
 
 4. Supported operations
    - in is not supported yet
@@ -78,5 +94,6 @@ save_evaluation - is an implementation of polish notation algorithm for mathemat
 
 5. Supported functions
    - map, filter, list, range
+   - bool, int, float, complex, str
    - np module functions (np.mean, etc.)
    - anonymous functions
