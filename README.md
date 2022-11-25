@@ -1,6 +1,6 @@
-# save_evaluation
+# safe_evaluation
 
-save_evaluation - is an implementation of polish notation algorithm for mathematical and dataframe operations
+safe_evaluation - is an implementation of polish notation algorithm for mathematical and dataframe operations
 
 # how to use
 
@@ -11,7 +11,7 @@ save_evaluation - is an implementation of polish notation algorithm for mathemat
 2. Tutorial 
    - import evaluation method
     ```
-    from save_evaluation import solve_expression
+    from safe_evaluation import solve_expression
     ```
    - send string that you want to evaluate
     ```
