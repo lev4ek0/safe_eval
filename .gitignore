@@ -1,0 +1,17 @@
+venv
+htmlcov
+dw d
+dist
+build
+safe_evaluation.egg-info
+.idea
+
+tests/.coverage
+example.log
+main.py
+pypirc
+screenshot.png
+screenshot1.png
+setup.py
+safe_evaluation/.coverage
+.coverage
