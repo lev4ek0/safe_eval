@@ -34,6 +34,11 @@ allowed_funcs = {
     'map': map,
     'filter': filter,
     'list': list,
+    'bool': bool,
+    'int': int,
+    'float': float,
+    'complex': complex,
+    'str': str,
 }
 
 
@@ -114,6 +119,7 @@ class TypeOfCommand(Enum):
     VARIABLE = 3
     FUNCTION_EXECUTABLE = 4
     FUNCTION = 5
+    PROPERTY = 6
 
 
 def _raise_excess_parentheses(s, pos):
@@ -168,6 +174,16 @@ def if_else_function(before, middle, end, df, local):
     return value
 
 
+def _add_excess_brackets(i, endif, command):
+    counter = 0
+    for j in range(endif.count("(")):
+        i += 1
+        while i < len(command) and command[i] != ')':
+            i += 1
+        counter += 1
+    return counter - endif.count(")"), i
+
+
 def _get_stack(command: str, local: dict = None, df = None) -> List[str]:
     """
     Returns splitted command.
@@ -179,13 +195,14 @@ def _get_stack(command: str, local: dict = None, df = None) -> List[str]:
     i = 0
 
     while i < len(command):
-        if if_else_pattern := re.match(r'[^\(\:]*if((?!if|else).)*(else)?[^)]*', command[i:]):
+        if if_else_pattern := re.match(r'[^\(\:]*[ ()]if[ ()]((?!if|else).)*(else)?[^)]*', command[i:]):
             if_else_string = command[i:i+if_else_pattern.regs[0][1]]
             before_if = re.match(r'((?!if).)*', if_else_string)
             middle_if = re.match(r'((?!else).)*', if_else_string[2 + before_if.regs[0][1]:])
             endif = if_else_string[2 + before_if.regs[0][1] + 4 + middle_if.regs[0][1]:]
-            stack.append((TypeOfCommand.FUNCTION, if_else_function(before_if.group(0), middle_if.group(0), endif, df, local)))
-            i += if_else_pattern.regs[0][1] - 1
+            counter, i = _add_excess_brackets(i + if_else_pattern.regs[0][1] - 1, endif, command)
+            endif += ''.join([')' for i in range(counter)])
+            stack.append((TypeOfCommand.VALUE, if_else_function(before_if.group(0), middle_if.group(0), endif, df, local)))
         elif command[i] in {'(', ')'}:
             stack.append(command[i])
         # mathing columns with ${column} format
@@ -196,11 +213,16 @@ def _get_stack(command: str, local: dict = None, df = None) -> List[str]:
             i += column_pattern.regs[0][1] - 1
         elif command[i] == '.':
             method_pattern = re.match(r'\.[\w]+\(.*\)', command[i:])
-            command_outer = method_pattern.string[:method_pattern.regs[0][1]]
-            method_name_pattern = re.match(r'\.[\w]+', command_outer)
-            command_inner = _text_inside_parentheses(command_outer)
-            stack.append((TypeOfCommand.METHOD, command_inner, method_name_pattern.string[1:method_name_pattern.regs[0][1]]))
-            i += method_name_pattern.regs[0][1] + len(command_inner) + 1
+            property_pattern = re.match(r'\.[\w]+', command[i:])
+            if method_pattern:
+                command_outer = method_pattern.string[:method_pattern.regs[0][1]]
+                method_name_pattern = re.match(r'\.[\w]+', command_outer)
+                command_inner = _text_inside_parentheses(command_outer)
+                stack.append((TypeOfCommand.METHOD, command_inner, method_name_pattern.string[1:method_name_pattern.regs[0][1]]))
+                i += method_name_pattern.regs[0][1] + len(command_inner) + 1
+            else:
+                stack.append((TypeOfCommand.PROPERTY, property_pattern.string[1:property_pattern.regs[0][1]]))
+                i += property_pattern.regs[0][1] - 1
         elif function_pattern := re.match(r'[\w.]+\(.*\)', command[i:]):
             command_outer = function_pattern.string[:function_pattern.regs[0][1]]
             function_name_pattern = re.match(r'[\w.]+', command_outer)
@@ -220,7 +242,7 @@ def _get_stack(command: str, local: dict = None, df = None) -> List[str]:
         elif list_pattern := re.match(r'\[[^\]]+\]', command[i:]):
             stack.append((TypeOfCommand.VALUE, literal_eval(list_pattern.string[1:list_pattern.regs[0][1] - 1])))
             i += list_pattern.regs[0][1]
-        elif command[i:i + 2] in operators:
+        elif len(command) > i + 2 and ((command[i:i + 3] in ('in ', 'in(')) or (command[i: i + 2] in operators and command[i: i + 2] != 'in')):
             stack.append(command[i:i + 2])
             i += 1
         elif command[i] in operators:
@@ -258,7 +280,10 @@ def _get_stack(command: str, local: dict = None, df = None) -> List[str]:
                     raise Exception(('Wrong expression at position {position}: "{expression}"').format(
                         expression=f'{prev_} --> {command[i]} <-- {next_}', position=str(i)))
                 else:
-                    stack.append((TypeOfCommand.FUNCTION, function))
+                    if callable(function):
+                        stack.append((TypeOfCommand.FUNCTION, function))
+                    else:
+                        stack.append((TypeOfCommand.VALUE, function))
                     break
         i += 1
     return stack
@@ -418,10 +443,10 @@ def _operate(stack, op, df, local):
         r = stack.pop()
         _raise_operation_cant_be_applied(stack, op)
         l = stack.pop()
+        var1 = _get_variable(l, df, local)
 
         if isinstance(r, tuple) and r[0] == TypeOfCommand.METHOD:
-            if hasattr(pd.Series, r[2]):
-                var1 = _get_variable(l, df, local)
+            if hasattr(var1, r[2]):
                 if r[2] in {'apply', 'quantile'} and not isinstance(var1, (pd.Series, pd.DataFrame)):
                     raise Exception(('Method "{method}" can only be applied to Series or Dataframe, not {type}')
                                     .format(method=r[2], type=type(var1)))
@@ -429,6 +454,12 @@ def _operate(stack, op, df, local):
                 stack.append(getattr(var1, r[2])(*args, **kwargs))
             else:
                 raise Exception(('Method "{method}" doesn\'t exist').format(method=r[2]))
+        elif isinstance(r, tuple) and r[0] == TypeOfCommand.PROPERTY:
+            if hasattr(var1, r[1]):
+                var1 = _get_variable(l, df, local)
+                stack.append(getattr(var1, r[1]))
+            else:
+                raise Exception(('Method "{method}" doesn\'t exist').format(method=r[1]))
         else:
             var1 = _get_variable(l, df, local)
             var2 = _get_variable(r, df, local)
@@ -470,7 +501,7 @@ def _polish_notation(s: List[Union[str, tuple]], df: Optional[pd.DataFrame] = No
             op.append(curop)
         else:
             stack.append(element)
-            if element[0] == TypeOfCommand.METHOD:
+            if element[0] in (TypeOfCommand.METHOD, TypeOfCommand.PROPERTY):
                 _operate(stack, '', df, local)
             if element[0] == TypeOfCommand.FUNCTION_EXECUTABLE:
                 r = stack.pop()
