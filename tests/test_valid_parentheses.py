@@ -1,8 +1,9 @@
 from safe_evaluation.expressions import _is_valid_parentheses
-from unittest import TestCase
+
+from tests.base import BaseTestCase
 
 
-class TestParentheses(TestCase):
+class TestParentheses(BaseTestCase):
 
     def test_valid_parentheses_1(self):
         expression = ['(', ')']

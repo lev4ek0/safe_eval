@@ -1,10 +1,11 @@
 import numpy as np
 
 from safe_evaluation import solve_expression
-from unittest import TestCase
+
+from tests.base import BaseTestCase
 
 
-class TestFactory(TestCase):
+class TestFactory(BaseTestCase):
 
     def test_lambda_multiple_variables(self):
         function_str = solve_expression("lambda a, b, c, d: a + b - c * d")

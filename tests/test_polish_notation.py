@@ -1,17 +1,9 @@
-import pandas as pd
-
 from safe_evaluation.expressions import _polish_notation, TypeOfCommand
-from unittest import TestCase
+
+from tests.base import BaseTestCase
 
 
-class TestParentheses(TestCase):
-    @staticmethod
-    def _create_df():
-        return pd.DataFrame({
-            'col1': [1, 1, 2, 2, 3, 3, 4],
-            'col2': [1, 1, 1, 2, 2, 2, 3],
-            'target': [1, 2, 3, 4, 5, 6, 7]
-        }), ['col1', 'col2', 'target']  # len = 7
+class TestParentheses(BaseTestCase):
 
     def test_polish_notation_default(self):
         df, df_columns = self._create_df()
@@ -22,7 +14,7 @@ class TestParentheses(TestCase):
 
     def test_polish_notation_wrong_column(self):
         df, df_columns = self._create_df()
-        stack = ['(', (TypeOfCommand.COLUMN, 'col3'), '<=', (TypeOfCommand.VALUE, 2), ')']
+        stack = ['(', (TypeOfCommand.COLUMN, 'col0'), '<=', (TypeOfCommand.VALUE, 2), ')']
         with self.assertRaises(KeyError):
             _polish_notation(stack, df).values.tolist()
 
@@ -139,6 +131,14 @@ class TestParentheses(TestCase):
         result = ['1', '1', '2', '2', '3', '3', '4']
         self.assertEqual(notation, result)
 
+    def test_div(self):
+        df, df_columns = self._create_df()
+        stack = [(TypeOfCommand.COLUMN, 'col1'),
+                 (TypeOfCommand.METHOD, '${col2}', 'div')]
+        notation = _polish_notation(stack, df).values.tolist()
+        result = [1, 1, 2, 1, 1.5, 1.5, 4/3]
+        self.assertEqual(notation, result)
+
     def test_max(self):
         df, df_columns = self._create_df()
         df[2:3] = 7
@@ -156,6 +156,26 @@ class TestParentheses(TestCase):
         result = [3]
         self.assertEqual(notation, result)
 
+    def test_diff(self):
+        df, df_columns = self._create_df()
+        stack = [(TypeOfCommand.COLUMN, 'col1'),
+                 (TypeOfCommand.METHOD, '3', 'diff'),
+                 (TypeOfCommand.METHOD, 'lambda v: 0 if np.isnan(v) else v', 'apply'),
+                 (TypeOfCommand.METHOD, 'int', 'astype')]
+        notation = _polish_notation(stack, df).values.tolist()
+        result = [0, 0, 0, 1, 2, 1, 2]
+        self.assertEqual(notation, result)
+
+    def test_shift(self):
+        df, df_columns = self._create_df()
+        stack = [(TypeOfCommand.COLUMN, 'col1'),
+                 (TypeOfCommand.METHOD, 'periods=3', 'shift'),
+                 (TypeOfCommand.METHOD, 'lambda v: 0 if np.isnan(v) else v', 'apply'),
+                 (TypeOfCommand.METHOD, 'int', 'astype')]
+        notation = _polish_notation(stack, df).values.tolist()
+        result = [0, 0, 0, 1, 1, 2, 2]
+        self.assertEqual(notation, result)
+
     def test_apply(self):
         df, df_columns = self._create_df()
         stack = [(TypeOfCommand.COLUMN, 'col1'),
@@ -164,17 +184,19 @@ class TestParentheses(TestCase):
         result = [True, True, True, True, False, False, False]
         self.assertEqual(notation, result)
 
+    def test_python_function(self):
+        df, df_columns = self._create_df()
+        stack = [(TypeOfCommand.COLUMN, 'col1'),
+                 (TypeOfCommand.METHOD, 'int', 'astype')]
+        notation =_polish_notation(stack, df).values.tolist()
+        result = [1, 1, 2, 2, 3, 3, 4]
+        self.assertEqual(notation, result)
+
+
     def test_method_exception(self):
         df, df_columns = self._create_df()
         stack = [(TypeOfCommand.VALUE, 'col1'),
                  (TypeOfCommand.METHOD, 'lambda t: (t == 1) & ${col1}.apply(lambda v: v >= ${col2}.max() + 1)', 'apply')]
-        with self.assertRaises(Exception):
-            _polish_notation(stack, df)
-
-    def test_analyse_exception(self):
-        df, df_columns = self._create_df()
-        stack = [(TypeOfCommand.COLUMN, 'col1'),
-                 (TypeOfCommand.METHOD, 'int', 'astype')]
         with self.assertRaises(Exception):
             _polish_notation(stack, df)
 

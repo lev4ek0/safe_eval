@@ -1,8 +1,9 @@
 from safe_evaluation import solve_expression
-from unittest import TestCase
+
+from tests.base import BaseTestCase
 
 
-class TestAllowedFuncs(TestCase):
+class TestAllowedFuncs(BaseTestCase):
 
     def test_literal_eval(self):
         expression = solve_expression("[1,2,3,4]")
@@ -31,3 +32,28 @@ class TestAllowedFuncs(TestCase):
     def test_eval(self):
         with self.assertRaises(Exception):
             solve_expression("eval(2 + 2)")
+
+    def test_int(self):
+        df, columns = self._create_df()
+        expression = solve_expression("(${col1} < 3).astype(int)", df).values.tolist()
+        self.assertEqual(list(expression), [1, 1, 1, 1, 0, 0, 0])
+
+    def test_bool(self):
+        df, columns = self._create_df()
+        expression = solve_expression("${col1}.astype(bool)", df).values.tolist()
+        self.assertEqual(list(expression), [True, True, True, True, True, True, True])
+
+    def test_float(self):
+        df, columns = self._create_df()
+        expression = solve_expression("${col1}.astype(float)", df).values.tolist()
+        self.assertEqual(list(expression), [1, 1, 2, 2, 3, 3, 4])
+
+    def test_str(self):
+        df, columns = self._create_df()
+        expression = solve_expression("(${col1} < 3).astype(str)", df).values.tolist()
+        self.assertEqual(list(expression), ["True", "True", "True", "True", "False", "False", "False"])
+
+    def test_complex(self):
+        df, columns = self._create_df()
+        expression = solve_expression("(${col1} < 3).astype(complex)", df).values.tolist()
+        self.assertEqual(list(expression), [1+0j, 1+0j, 1+0j, 1+0j, 0+0j, 0+0j, 0+0j])

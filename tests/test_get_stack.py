@@ -1,8 +1,9 @@
 from safe_evaluation.expressions import _get_stack, TypeOfCommand
-from unittest import TestCase
+
+from tests.base import BaseTestCase
 
 
-class TestStack(TestCase):
+class TestStack(BaseTestCase):
 
     def test_stack_parentheses(self):
         expression = '()'
