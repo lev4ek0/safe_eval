@@ -1,4 +1,7 @@
+from datetime import datetime, timedelta
+
 import numpy as np
+import pandas as pd
 
 from safe_evaluation import solve_expression
 
@@ -16,6 +19,37 @@ class TestFactory(BaseTestCase):
         function_str = solve_expression("np.mean")
         function_code = np.mean
         self.assertEqual(function_str(list(range(100))), function_code(list(range(100))))
+
+    def test_numpy_mean(self):
+        function_str = solve_expression("numpy.mean")
+        function_code = np.mean
+        self.assertEqual(function_str(list(range(100))), function_code(list(range(100))))
+
+    def test_pandas_date_range(self):
+        function_str = solve_expression("pandas.date_range")
+        function_code = pd.date_range
+        start = datetime(year=2021, month=2, day=5)
+        end = datetime(year=2021, month=3, day=5)
+        freq = timedelta(days=1)
+        self.assertEqual(
+            list(function_str(start=start, end=end, freq=freq)),
+            list(function_code(start=start, end=end, freq=freq))
+        )
+
+    def test_pd_date_range(self):
+        function_str = solve_expression("pd.date_range")
+        function_code = pd.date_range
+        start = datetime(year=2021, month=2, day=5)
+        end = datetime(year=2021, month=3, day=5)
+        freq = timedelta(days=1)
+        self.assertEqual(
+            list(function_str(start=start, end=end, freq=freq)),
+            list(function_code(start=start, end=end, freq=freq))
+        )
+
+    def test_pd_date_range_params(self):
+        expression = solve_expression("pd.date_range(start='2021-02-05', end='2021-03-05', freq='1D')")
+        self.assertEqual(len(expression), 29)
 
     def test_np_mean_lambda_kwargs(self):
         function_str = solve_expression("lambda a, axis: np.mean(a=a, axis=axis)")

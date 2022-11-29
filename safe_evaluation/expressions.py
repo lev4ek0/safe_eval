@@ -467,10 +467,11 @@ def _operate(stack, op, df, local):
 
 
 def _handle_function(func: str) -> Callable:
-    if func.startswith('numpy') or func.startswith('np'):
+    if func.startswith(('numpy', 'np', 'pandas', 'pd')):
         if '.' in func:
-            func = func.split('.')[1]
-            return getattr(np, func)
+            method = func.split('.')[1]
+            package = np if func.startswith('n') else pd
+            return getattr(package, method)
     if func in allowed_funcs:
         return allowed_funcs[func]
     raise Exception(f"Unsupported function {func}")

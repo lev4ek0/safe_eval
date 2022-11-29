@@ -84,6 +84,10 @@ safe_evaluation - is an implementation of polish notation algorithm for mathemat
                                                                   6    3
                                                                   Name: dates, dtype: int64
       ```
+   -  ```
+      range = solve_expression(command="pd.date_range(start='2021-02-05', end='2021-03-05', freq='1D')"")
+      len(range)  # 29
+      ```
 
 4. Supported operations
    - in is not supported yet
@@ -95,5 +99,6 @@ safe_evaluation - is an implementation of polish notation algorithm for mathemat
 5. Supported functions
    - map, filter, list, range
    - bool, int, float, complex, str
-   - np module functions (np.mean, etc.)
+   - numpy module functions (np.mean, etc.)
+   - pandas module functions (pd.date_range, etc.)
    - anonymous functions
