@@ -88,6 +88,13 @@ safe_evaluation - is an implementation of polish notation algorithm for mathemat
       range = solve_expression(command="pd.date_range(start='2021-02-05', end='2021-03-05', freq='1D')"")
       len(range)  # 29
       ```
+   
+   -  ```
+      df = pd.DataFrame(data={'col1': [1, 2], 'col2': [3, 4]})
+      sorted_df = solve_expression(command="${[df]}.sort_values('col2', ascending=False)", df=df)  #    col1  col2
+                                                                                                     0     2     4
+                                                                                                     1     1     3
+      ```
 
 4. Supported operations
    - in is not supported yet
@@ -102,3 +109,7 @@ safe_evaluation - is an implementation of polish notation algorithm for mathemat
    - numpy module functions (np.mean, etc.)
    - pandas module functions (pd.date_range, etc.)
    - anonymous functions
+
+6. Supported access to data
+   - ${col_name} is same as df['col_name']
+   - ${[df]} is same as df

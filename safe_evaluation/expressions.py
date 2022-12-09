@@ -120,6 +120,7 @@ class TypeOfCommand(Enum):
     FUNCTION_EXECUTABLE = 4
     FUNCTION = 5
     PROPERTY = 6
+    DATAFRAME = 7
 
 
 def _raise_excess_parentheses(s, pos):
@@ -209,7 +210,11 @@ def _get_stack(command: str, local: dict = None, df = None) -> List[str]:
         elif command[i] == '$':
             # todo: handle "{", "}" as name of column
             column_pattern = re.match(r'\${[^\{\}]+}', command[i:])
-            stack.append((TypeOfCommand.COLUMN, column_pattern.string[2:column_pattern.regs[0][1] - 1]))
+            column_name = column_pattern.string[2:column_pattern.regs[0][1] - 1]
+            if column_name == '[df]':
+                stack.append((TypeOfCommand.DATAFRAME, ))
+            else:
+                stack.append((TypeOfCommand.COLUMN, column_name))
             i += column_pattern.regs[0][1] - 1
         elif command[i] == '.':
             method_pattern = re.match(r'\.[\w]+\(.*\)', command[i:])
@@ -255,8 +260,11 @@ def _get_stack(command: str, local: dict = None, df = None) -> List[str]:
             else:
                 stack.append((TypeOfCommand.VALUE, int(number_pattern.string[:number_pattern.regs[0][1]])))
                 i += number_pattern.regs[0][1] - 1
-        elif bool_pattern := re.match('True', command[i:]) or re.match('False', command[i:]):
-            stack.append((TypeOfCommand.VALUE, bool(bool_pattern.string[:bool_pattern.regs[0][1]])))
+        elif bool_pattern := re.match('True', command[i:]):
+            stack.append((TypeOfCommand.VALUE, True))
+            i += bool_pattern.regs[0][1] - 1
+        elif bool_pattern := re.match('False', command[i:]):
+            stack.append((TypeOfCommand.VALUE, False))
             i += bool_pattern.regs[0][1] - 1
         elif lambda_pattern := re.match(r' *lambda [^:]*:', command[i:]):
             # ex: "lambda v: v ** 2 < 34"
@@ -327,6 +335,11 @@ def _get_variable(var, df, local) -> pd.Series:
                 variable = df[var[1]]
             except KeyError:
                 raise KeyError(('The input DataFrame doesn\'t contain "{var}" column').format(var=f'{var[1]}'))
+        elif var[0] == TypeOfCommand.DATAFRAME:
+            if len(var) == 1:
+                variable = df
+            else:
+                variable = df[var[1]]
         elif var[0] == TypeOfCommand.VARIABLE:
             if local and var[1] in local:
                 variable = local[var[1]]
@@ -451,6 +464,8 @@ def _operate(stack, op, df, local):
                     raise Exception(('Method "{method}" can only be applied to Series or Dataframe, not {type}')
                                     .format(method=r[2], type=type(var1)))
                 args, kwargs = _solve_inside_method(r[1], df, local)
+                args = [list(arg) if isinstance(arg, tuple) else arg for arg in args]
+                kwargs = {k: list(v) if isinstance(v, tuple) else v for k, v in kwargs.items()}
                 stack.append(getattr(var1, r[2])(*args, **kwargs))
             else:
                 raise Exception(('Method "{method}" doesn\'t exist').format(method=r[2]))
