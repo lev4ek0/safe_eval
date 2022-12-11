@@ -91,7 +91,7 @@ safe_evaluation - is an implementation of polish notation algorithm for mathemat
    
    -  ```
       df = pd.DataFrame(data={'col1': [1, 2], 'col2': [3, 4]})
-      sorted_df = solve_expression(command="${[df]}.sort_values('col2', ascending=False)", df=df)  #    col1  col2
+      sorted_df = solve_expression(command="${__df}.sort_values('col2', ascending=False)", df=df)  #    col1  col2
                                                                                                      0     2     4
                                                                                                      1     1     3
       ```
@@ -112,4 +112,4 @@ safe_evaluation - is an implementation of polish notation algorithm for mathemat
 
 6. Supported access to data
    - ${col_name} is same as df['col_name']
-   - ${[df]} is same as df
+   - ${__df} is same as df

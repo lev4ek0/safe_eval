@@ -73,17 +73,17 @@ class TestFactory(BaseTestCase):
 
     def test_sort_values(self):
         df, columns = self._create_df()
-        sorted_df = solve_expression("${[df]}.sort_values('col3')", df=df)
+        sorted_df = solve_expression("${__df}.sort_values('col3')", df=df)
         self.assertEqual(sorted_df['col3'].values.tolist(), sorted(df['col3'].values.tolist()))
 
     def test_sort_values_ascending(self):
         df, columns = self._create_df()
-        sorted_df = solve_expression("${[df]}.sort_values('col3', ascending=False)", df=df)
+        sorted_df = solve_expression("${__df}.sort_values('col3', ascending=False)", df=df)
         self.assertEqual(sorted_df['col3'].values.tolist(), sorted(df['col3'].values.tolist(), reverse=True))
 
     def test_sort_values_by(self):
         df, columns = self._create_df()
-        sorted_df = solve_expression("${[df]}.sort_values(['col3', 'col2'])", df=df)
+        sorted_df = solve_expression("${__df}.sort_values(['col3', 'col2'])", df=df)
         self.assertEqual(
             list(map(lambda x: tuple(x), sorted_df[['col3', 'col2']].astype(int).values.tolist())),
             sorted(zip(df['col3'].values.tolist(), df['col2'].values.tolist()), key=lambda x: (x[0], x[1]))
@@ -91,5 +91,5 @@ class TestFactory(BaseTestCase):
 
     def test_sort_values_ignore_index(self):
         df, columns = self._create_df()
-        sorted_df = solve_expression("${[df]}.sort_values('col3', ignore_index=True, ascending=False)", df=df)
+        sorted_df = solve_expression("${__df}.sort_values('col3', ignore_index=True, ascending=False)", df=df)
         self.assertEqual(sorted_df.index.values.tolist(), [_ for _ in range(len(df))])

@@ -211,7 +211,7 @@ def _get_stack(command: str, local: dict = None, df = None) -> List[str]:
             # todo: handle "{", "}" as name of column
             column_pattern = re.match(r'\${[^\{\}]+}', command[i:])
             column_name = column_pattern.string[2:column_pattern.regs[0][1] - 1]
-            if column_name == '[df]':
+            if column_name == '__df':
                 stack.append((TypeOfCommand.DATAFRAME, ))
             else:
                 stack.append((TypeOfCommand.COLUMN, column_name))
