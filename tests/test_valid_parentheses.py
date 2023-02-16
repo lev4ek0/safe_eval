@@ -1,6 +1,10 @@
-from safe_evaluation.expressions import _is_valid_parentheses
+from safe_evaluation import Preprocessor, Evaluator
 
 from tests.base import BaseTestCase
+
+
+evaluator = Evaluator()
+_is_valid_parentheses = Preprocessor(evaluator)._is_valid_parentheses
 
 
 class TestParentheses(BaseTestCase):

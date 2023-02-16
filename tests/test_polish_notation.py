@@ -1,6 +1,11 @@
-from safe_evaluation.expressions import _polish_notation, TypeOfCommand
+from safe_evaluation.constants import TypeOfCommand
+from safe_evaluation import Calculator, Evaluator
 
 from tests.base import BaseTestCase
+
+
+evaluator = Evaluator()
+_polish_notation = Calculator(evaluator)._polish_notation
 
 
 class TestParentheses(BaseTestCase):

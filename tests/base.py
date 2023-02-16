@@ -4,8 +4,11 @@ import pandas as pd
 
 from unittest import TestCase
 
+from safe_evaluation import Evaluator
+
 
 class BaseTestCase(TestCase):
+    expression = Evaluator()
 
     @staticmethod
     def _create_df():

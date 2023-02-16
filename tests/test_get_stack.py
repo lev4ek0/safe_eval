@@ -1,6 +1,11 @@
-from safe_evaluation.expressions import _get_stack, TypeOfCommand
+from safe_evaluation import Preprocessor, Evaluator
+from safe_evaluation.constants import TypeOfCommand
 
 from tests.base import BaseTestCase
+
+
+evaluator = Evaluator()
+_get_stack = Preprocessor(evaluator)._get_stack
 
 
 class TestStack(BaseTestCase):
