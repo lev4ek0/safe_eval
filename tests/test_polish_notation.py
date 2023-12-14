@@ -111,6 +111,13 @@ class TestParentheses(BaseTestCase):
         result = 3 * 5 ** 2 / 2 ** 3 % (10 / 2 + 8.888) % 10 ** 2 % 3
         self.assertEqual(notation, result)
 
+    def test_priority_not_equals(self):
+        df, df_columns = self._create_df()
+        stack = ['(', (TypeOfCommand.COLUMN, 'col1'), '!=', (TypeOfCommand.VALUE, 1), ')']
+        notation = _polish_notation(stack, df).values.tolist()
+        result = [False, False, True, True, True, True, True]
+        self.assertEqual(notation, result)
+
     def test_local_var(self):
         df, df_columns = self._create_df()
         stack = [(TypeOfCommand.VARIABLE, 'v'), '**', (TypeOfCommand.VALUE, 2), '>', (TypeOfCommand.VALUE, 5)]
