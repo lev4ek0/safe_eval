@@ -62,6 +62,7 @@ OPERATORS_PRIORITIES = {
     'in': 1,
 
     # comparison
+    '!=': 2,
     '==': 2,
     '>=': 2,
     '>': 2,
